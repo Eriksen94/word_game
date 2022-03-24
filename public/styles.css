@@ -1,0 +1,36 @@
+html , body {
+    color: black;
+    background-color: #FBF8F1;
+}
+
+h1 {
+	font-size: 3rem;
+}
+
+.centered {
+    text-align: center;
+}
+
+.vertical-center {
+	min-height: 100%;  /* Fallback for browsers do NOT support vh unit */
+	min-height: 100vh; /* These two lines are counted as one :-)       */
+  
+	display: flex;
+	align-items: center;
+}
+
+#viewport {
+	border:solid 0.2rem black;
+    width: 90%;
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    display: block; 
+}
+
+@media (max-width: 575.98px) { 
+	.input-group-text {
+		width: 110px;
+	}
+ }
