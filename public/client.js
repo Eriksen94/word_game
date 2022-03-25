@@ -1,4 +1,4 @@
-//sutom - 7-9 letters, common french word, 6 guesses 
+//sutom - 6-8 letters, common french word, 6 guesses 
 //red = correct
 //orange = letter is used, different space
 //blue (default) = not used
@@ -7,27 +7,25 @@
 /**************************Setup variables***************************/
 /********************************************************************/
 let debug = false;
-let maxGuesses = 6;
+const MAX_GUESSES = 6;
 let currentGuess = 0;
 let matchingSpace = "#FF0000";
 let matchingLetter = "#FFA500";
-
 //WORDS_FR from separate list file
 let now = new Date();
+
+//Select word based on the day, and update display for time settings
 //days since epoch
 let wordInd = Math.floor(now/8.64e7) % WORDS_FR.length;
 let targetWord = WORDS_FR[wordInd];
 if(debug) console.log("word: ", targetWord);
 
-//script variables that display and govern game state
+//adjust the canvas which displays the word selection elements
 let canvas = document.getElementById("viewport");
 let canvasCtx = canvas.getContext("2d");
-canvas.width=1000;//horizontal resolution (?) - increase for better looking text
-canvas.height=800;//vertical resolution (?) - increase for better looking text
-//canvas.style.width=400;//actual width of canvas
+canvas.width=1000;//horizontal resolution - increase for better looking text
+canvas.height=800;//vertical resolution - increase for better looking text
 canvas.style.height=500;//actual height of canvas
-
-drawBoard(targetWord.length, debug);
 
 const Keyboard = window.SimpleKeyboard.default;
 
@@ -47,6 +45,14 @@ const myKeyboard = new Keyboard({
   },
 });
 
+/********************************************************************/
+/************************Setup game elements*************************/
+/********************************************************************/
+
+drawBoard(targetWord.length, MAX_GUESSES, debug);
+
+//keyboard events on change
+//prevent overflowing input longer then the target word
 function onChange(input) {
     if(myKeyboard.getInput().length > targetWord.length){
         myKeyboard.setInput(myKeyboard.getInput().slice(0,-1));   
@@ -57,14 +63,17 @@ function onChange(input) {
     }
 }
 
+//keyboard events on key press
+//on enter - submit the guess, or reject if it's not long enough, or an invalid word
+//otherwise - default keyboard behavior to add to input buffer
 function onKeyPress(button) {
     if(button === "{enter}" && myKeyboard.getInput().length === targetWord.length){
         if(debug) console.log("guess count, ", currentGuess);
-        if(currentGuess < maxGuesses){
+        if(currentGuess < MAX_GUESSES){
           if(WORDS_FR.includes(myKeyboard.getInput().toLowerCase())){
             document.querySelector("#warning").innerHTML = "";
             if(debug) console.log("send guess, ", myKeyboard.getInput());
-            drawWord(myKeyboard.getInput(), currentGuess, targetWord)
+            drawWord(myKeyboard.getInput(), currentGuess, targetWord, debug)
             currentGuess += 1;
             myKeyboard.setInput(""); 
           }
@@ -82,11 +91,12 @@ function onKeyPress(button) {
 /********************************************************************/
 
 //draw grid lines on the canvas
-//return array of 0s for the size passed in
+//word_length = columns needed
+//guesses = rows needed
 //canvasCtx is script scoped
-function drawBoard(word_length, verbose = false) {
+function drawBoard(word_length, guesses, verbose = false) {
     let size = {
-        rows: 6,
+        rows: guesses,
         cols: word_length
     };
     canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
@@ -112,29 +122,24 @@ function drawBoard(word_length, verbose = false) {
     canvasCtx.strokeStyle = "#000000";
     canvasCtx.lineWidth = 2;
     canvasCtx.stroke();
-  
-    let tempBoard = new Array();
-    for (let i = 0; i < size.rows; i++) {
-      let a = new Array(size.cols);
-      for (let j = 0; j < size.cols; ++j) a[j] = 0;
-      if (verbose) console.log(a);
-      tempBoard.push(a);
-    }
-    if (verbose) console.log(tempBoard);
-    return tempBoard;
 }
 
-//add comments
-function drawWord(word, guessCount, target){
+//draw a guess to the board
+//highlight squares based on how it matches target
+//dim keyboard keys no longer needed
+//word = guess (str) being written in
+//guessCount = (int) current guess (indicated row index to be written to)
+//target = word (str) being compared against
+function drawWord(word, guessCount, target, verbose = false){
   word = word.toUpperCase();
   target = target.toUpperCase();
   let ht = canvas.height;
   let wd = canvas.width;
-  let rowHt = Math.floor(ht / maxGuesses); //number of guesses = rows
+  let rowHt = Math.floor(ht / MAX_GUESSES); //number of guesses = rows
   let colWd = Math.floor(wd / word.length); //length of word = cols
   for(let i = 0; i < word.length; i++){
     let letter = word.charAt(i);
-    if(debug) console.log("Letter " + letter + " , guess: " + guessCount);
+    if(verbose) console.log("Letter " + letter + " , guess: " + guessCount);
 
     //identify coordinates, then fill
     let xStartFill = colWd * i;
@@ -150,7 +155,7 @@ function drawWord(word, guessCount, target){
       adjust[0] = 0;
       adjust[2] = -1;
     }
-    if (guessCount === maxGuesses-1){
+    if (guessCount === MAX_GUESSES-1){
       //last row - inc row ht to fill edge
       const htRemainder = ht % rowHt;
       adjust[3] = htRemainder - 1;
@@ -164,11 +169,11 @@ function drawWord(word, guessCount, target){
     if(target.includes(letter)){
       //letter match - highlight orange
       canvasCtx.fillStyle = matchingLetter;
-      if(debug) console.log("Letter match " + letter);
+      if(verbose) console.log("Letter match " + letter);
       if(letter === target.charAt(i)){
         //exact match - highlight red
         canvasCtx.fillStyle = matchingSpace;
-        if(debug) console.log("Exact match " + letter);
+        if(verbose) console.log("Exact match " + letter);
       }
       canvasCtx.fillRect(
         xStartFill + adjust[0],
@@ -181,12 +186,12 @@ function drawWord(word, guessCount, target){
       myKeyboard.addButtonTheme(letter, "hg-dark")
     }
 
-    if(debug) console.log("write " + letter);
+    if(verbose) console.log("write " + letter);
     //write letters to board
     const xStart = colWd * i;
-    const xOffset = colWd/2 - 40;
+    const xOffset = colWd/2 - 50;
     const yStart = rowHt * guessCount;
-    const yOffset = rowHt/2 + 25; 
+    const yOffset = rowHt/2 + 40; 
     canvasCtx.fillStyle = "#000";
     canvasCtx.font = "120px Georgia";
     canvasCtx.fillText(letter, xStart + xOffset, yStart + yOffset);
