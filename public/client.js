@@ -1,18 +1,31 @@
+//sutom - 7-9 letters, common french word, 6 guesses 
+//red = correct
+//orange = letter is used, different space
+//blue (default) = not used
+
 /********************************************************************/
 /**************************Setup variables***************************/
 /********************************************************************/
-let debug = true;
+let debug = false;
 let maxGuesses = 6;
 let currentGuess = 0;
-let targetWord = "tester"; //replace with API later
+let matchingSpace = "#FF0000";
+let matchingLetter = "#FFA500";
+
+//WORDS_FR from separate list file
+let now = new Date();
+//days since epoch
+let wordInd = Math.floor(now/8.64e7) % WORDS_FR.length;
+let targetWord = WORDS_FR[wordInd];
+if(debug) console.log("word: ", targetWord);
 
 //script variables that display and govern game state
 let canvas = document.getElementById("viewport");
 let canvasCtx = canvas.getContext("2d");
 canvas.width=1000;//horizontal resolution (?) - increase for better looking text
-canvas.height=500;//vertical resolution (?) - increase for better looking text
-canvas.style.width=400;//actual width of canvas
-//canvas.style.height=500;//actual height of canvas
+canvas.height=800;//vertical resolution (?) - increase for better looking text
+//canvas.style.width=400;//actual width of canvas
+canvas.style.height=500;//actual height of canvas
 
 drawBoard(targetWord.length, debug);
 
@@ -31,7 +44,7 @@ const myKeyboard = new Keyboard({
   display: {
     '{bksp}': '⌫',
     '{enter}': 'enter'
-  }
+  },
 });
 
 function onChange(input) {
@@ -48,18 +61,21 @@ function onKeyPress(button) {
     if(button === "{enter}" && myKeyboard.getInput().length === targetWord.length){
         if(debug) console.log("guess count, ", currentGuess);
         if(currentGuess < maxGuesses){
+          if(WORDS_FR.includes(myKeyboard.getInput().toLowerCase())){
+            document.querySelector("#warning").innerHTML = "";
             if(debug) console.log("send guess, ", myKeyboard.getInput());
-            drawWord(myKeyboard.getInput(), currentGuess)
+            drawWord(myKeyboard.getInput(), currentGuess, targetWord)
             currentGuess += 1;
+            myKeyboard.setInput(""); 
+          }
+          else{
+            if(debug) console.log("word is invalid");
+            document.querySelector("#warning").innerHTML = "Word is invalid, try another.";
+          }
         }
     }
     if(debug) console.log("Button pressed", button);
 }
-
-//sutom - 7-9 letters, common french word, 6 guesses 
-//red = correct
-//orange = letter is used, different space
-//blue (default) = not used
 
 /********************************************************************/
 /*********************game play/setup functions**********************/
@@ -67,7 +83,6 @@ function onKeyPress(button) {
 
 //draw grid lines on the canvas
 //return array of 0s for the size passed in
-//params: size {rows: ..., cols: ...}
 //canvasCtx is script scoped
 function drawBoard(word_length, verbose = false) {
     let size = {
@@ -109,7 +124,72 @@ function drawBoard(word_length, verbose = false) {
     return tempBoard;
 }
 
-function drawWord(word, guessCount){
+//add comments
+function drawWord(word, guessCount, target){
+  word = word.toUpperCase();
+  target = target.toUpperCase();
+  let ht = canvas.height;
+  let wd = canvas.width;
+  let rowHt = Math.floor(ht / maxGuesses); //number of guesses = rows
+  let colWd = Math.floor(wd / word.length); //length of word = cols
+  for(let i = 0; i < word.length; i++){
+    let letter = word.charAt(i);
+    if(debug) console.log("Letter " + letter + " , guess: " + guessCount);
 
+    //identify coordinates, then fill
+    let xStartFill = colWd * i;
+    let yStartFill = rowHt * guessCount;
+    let adjust = [1, 1, -2, -2]; //2px grid lines
+    if (guessCount === 0) {
+      //first row - no top line offset, start pos up 1px, ht inc 1px
+      adjust[1] = 0;
+      adjust[3] = -1;
+    }
+    if (i === 0) {
+      //first col - no left line, start pos left 1px, wd inc 1px
+      adjust[0] = 0;
+      adjust[2] = -1;
+    }
+    if (guessCount === maxGuesses-1){
+      //last row - inc row ht to fill edge
+      const htRemainder = ht % rowHt;
+      adjust[3] = htRemainder - 1;
+    }
+    if (i === target.length-1){
+      //last column - inc col wd to fill edge
+      const colRemainder = wd % colWd;
+      adjust[2] = colRemainder - 1;
+    }
+    
+    if(target.includes(letter)){
+      //letter match - highlight orange
+      canvasCtx.fillStyle = matchingLetter;
+      if(debug) console.log("Letter match " + letter);
+      if(letter === target.charAt(i)){
+        //exact match - highlight red
+        canvasCtx.fillStyle = matchingSpace;
+        if(debug) console.log("Exact match " + letter);
+      }
+      canvasCtx.fillRect(
+        xStartFill + adjust[0],
+        yStartFill + adjust[1],
+        colWd + adjust[2],
+        rowHt + adjust[3]
+      ); //adjustments for line thickness
+    }
+    else{
+      myKeyboard.addButtonTheme(letter, "hg-dark")
+    }
+
+    if(debug) console.log("write " + letter);
+    //write letters to board
+    const xStart = colWd * i;
+    const xOffset = colWd/2 - 40;
+    const yStart = rowHt * guessCount;
+    const yOffset = rowHt/2 + 25; 
+    canvasCtx.fillStyle = "#000";
+    canvasCtx.font = "120px Georgia";
+    canvasCtx.fillText(letter, xStart + xOffset, yStart + yOffset);
+  }
 }
 

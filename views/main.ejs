@@ -51,9 +51,9 @@
           <div class="col-lg-3 col-md-2 col-sm-1"></div>
           <div class="col-lg-6 col-md-8 col-sm-10 centered">
             <h1>SUTOM-ish</h3>
-            <p class="p-0 m-0">Common French Words, 6-9 letters</p>
-            <p class="p-0 m-0">word selected: dd/mm/yy</p>
-            <p class="p-0 m-0">new word in hh</p>
+            <p class="p-0 m-0">Common French Words, 6-8 letters</p>
+            <p class="p-0 m-0">Word Selected: <%=day%></p>
+            <p class="p-0 m-0">New Word In: <%=nextWord%></p>
           </div>
         </div>
 
@@ -71,7 +71,8 @@
         <div class="row">
             <div class="col-lg-3 col-md-2"></div>
             <div class="col-lg-6 col-md-8 col-sm-12 centered">
-                <p id="input"></p>
+                <p id="input" class="p-0 m-0"></p>
+                <p id="warning" class="p-0 m-0"></p>
                 <div class="simple-keyboard"></div>
             </div>
             <div class="col-lg-3 col-md-2"></div>
@@ -82,6 +83,7 @@
 
     <!-- Finally, Load the game client code. -->
     <script src="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/index.js"></script>
+    <script src="/words_fr.js" charset="utf-8"></script>
     <script src="/client.js" charset="utf-8"></script>
   </body>
 </html>
