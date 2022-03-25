@@ -2,7 +2,7 @@
 
 A Wordle rip off in French, Sutom, was discontinued (copyright?) and so this is a homebrew rip off of the rip off
 
-Link: TBD when hosted
+Link: https://sutom-ish.herokuapp.com/
 
 ## Instructions
 
