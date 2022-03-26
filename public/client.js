@@ -6,19 +6,21 @@
 /********************************************************************/
 /**************************Setup variables***************************/
 /********************************************************************/
-let debug = false;
+let debug = true;
 const MAX_GUESSES = 6;
 let currentGuess = 0;
 let matchingSpace = "#FF0000";
 let matchingLetter = "#FFA500";
 //WORDS_FR from separate list file
+let today = Date.now();
 let now = new Date();
 
 //Select word based on the day, and update display for time settings
 //days since epoch
-let wordInd = Math.floor(now/8.64e7) % WORDS_FR.length;
+if(debug) console.log("days: ", today, now.getTimezoneOffset()*60*1000);
+let wordInd = Math.floor((today+now.getTimezoneOffset()*60*1000)/8.64e7) % WORDS_FR.length;
 let targetWord = WORDS_FR[wordInd];
-if(debug) console.log("word: ", targetWord);
+if(debug) console.log("word: ", targetWord, wordInd);
 
 //adjust the canvas which displays the word selection elements
 let canvas = document.getElementById("viewport");
@@ -49,7 +51,7 @@ const myKeyboard = new Keyboard({
 /************************Setup game elements*************************/
 /********************************************************************/
 
-drawBoard(targetWord.length, MAX_GUESSES, debug);
+drawBoard(targetWord, MAX_GUESSES, true, debug);
 
 //keyboard events on change
 //prevent overflowing input longer then the target word
@@ -70,7 +72,7 @@ function onKeyPress(button) {
     if(button === "{enter}" && myKeyboard.getInput().length === targetWord.length){
         if(debug) console.log("guess count, ", currentGuess);
         if(currentGuess < MAX_GUESSES){
-          if(WORDS_FR.includes(myKeyboard.getInput().toLowerCase())){
+          if(WORDS_FR.includes(myKeyboard.getInput().toUpperCase())){
             document.querySelector("#warning").innerHTML = "";
             if(debug) console.log("send guess, ", myKeyboard.getInput());
             drawWord(myKeyboard.getInput(), currentGuess, targetWord, debug)
@@ -94,10 +96,11 @@ function onKeyPress(button) {
 //word_length = columns needed
 //guesses = rows needed
 //canvasCtx is script scoped
-function drawBoard(word_length, guesses, verbose = false) {
+function drawBoard(target, guesses, addFirst, verbose = false) {
+
     let size = {
         rows: guesses,
-        cols: word_length
+        cols: target.length
     };
     canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
     canvasCtx.beginPath();
@@ -122,6 +125,17 @@ function drawBoard(word_length, guesses, verbose = false) {
     canvasCtx.strokeStyle = "#000000";
     canvasCtx.lineWidth = 2;
     canvasCtx.stroke();
+
+    if(addFirst){
+      //write first letter to board
+      const xStart = 0;
+      const xOffset = colWd/2 - 50;
+      const yStart = 0;
+      const yOffset = rowHt/2 + 40; 
+      canvasCtx.fillStyle = "#000";
+      canvasCtx.font = "120px Georgia";
+      canvasCtx.fillText(target.charAt(0).toUpperCase(), xStart + xOffset, yStart + yOffset);
+    }
 }
 
 //draw a guess to the board
@@ -137,6 +151,11 @@ function drawWord(word, guessCount, target, verbose = false){
   let wd = canvas.width;
   let rowHt = Math.floor(ht / MAX_GUESSES); //number of guesses = rows
   let colWd = Math.floor(wd / word.length); //length of word = cols
+
+  if(guessCount === 0){
+    drawBoard(target, MAX_GUESSES, false);
+  }
+
   for(let i = 0; i < word.length; i++){
     let letter = word.charAt(i);
     if(verbose) console.log("Letter " + letter + " , guess: " + guessCount);

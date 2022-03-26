@@ -20,7 +20,8 @@ let gamePort = process.env.PORT || 3000;
 app.get("/", function (req, res) {
   let today = new Date();
   let options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  let nextDayMs = 8.64e7 - (today - 8.64e7 * Math.floor(today/8.64e7));
+  let nextDayMs = 8.64e7 - (today - 8.64e7 * Math.floor(today/8.64e7)); //UTC time
+  nextDayMs = nextDayMs + today.getTimezoneOffset()*60*1000; //adjust for local time (midnight reset)
 
   let renderContent = {
     day: today.toLocaleDateString("en-US", options),
