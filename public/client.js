@@ -6,19 +6,27 @@
 /********************************************************************/
 /**************************Setup variables***************************/
 /********************************************************************/
-let debug = true;
+let debug = false;
 const MAX_GUESSES = 6;
 let currentGuess = 0;
 let matchingSpace = "#FF0000";
 let matchingLetter = "#FFA500";
 //WORDS_FR from separate list file
-let today = Date.now();
-let now = new Date();
+
+//time stuff
+let today = new Date();
+let now = Date.now();
+let options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+let nextDayMs = 8.64e7 - (today - 8.64e7 * Math.floor(today/8.64e7)); //UTC time
+nextDayMs = nextDayMs + today.getTimezoneOffset()*60*1000; //adjust for local time (midnight reset)
+
+document.querySelector("#date").innerHTML = "Word Selected: " + today.toLocaleDateString("en-US", options);
+document.querySelector("#next_word").innerHTML = "New Word In: " + msToHM(nextDayMs);
 
 //Select word based on the day, and update display for time settings
 //days since epoch
-if(debug) console.log("days: ", today, now.getTimezoneOffset()*60*1000);
-let wordInd = Math.floor((today+now.getTimezoneOffset()*60*1000)/8.64e7) % WORDS_FR.length;
+if(debug) console.log("days: ", now, today.getTimezoneOffset()*60*1000);
+let wordInd = Math.floor((now+today.getTimezoneOffset()*60*1000)/8.64e7) % WORDS_FR.length;
 let targetWord = WORDS_FR[wordInd];
 if(debug) console.log("word: ", targetWord, wordInd);
 
@@ -217,3 +225,16 @@ function drawWord(word, guessCount, target, verbose = false){
   }
 }
 
+//convert a millisecond value to a string made up of the hours and minutes in that time period
+function msToHM( ms ) {
+  // 1- Convert to seconds:
+  let seconds = ms / 1000;
+  // 2- Extract hours:
+  const hours = parseInt( seconds / 3600 ); // 3,600 seconds in 1 hour
+  seconds = seconds % 3600; // seconds remaining after extracting hours
+  // 3- Extract minutes:
+  const minutes = parseInt( seconds / 60 ); // 60 seconds in 1 minute
+  // 4- Keep only seconds not extracted to minutes:
+  seconds = seconds % 60;
+  return hours+" Hours, "+minutes+" mins";
+}
